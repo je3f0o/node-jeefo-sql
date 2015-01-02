@@ -1,0 +1,19 @@
+{
+  "name": "jeefo-sql",
+  "version": "0.0.20",
+  "description": "Very simple mysql ORM for to use my own projects.",
+  "main": "lib/jeefo_sql",
+  "author": "jeefo",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^0.9.0",
+    "generic-pool": "^2.1.1",
+    "mysql": "^2.5.3"
+  },
+  "devDependencies": {
+    "chance": "^0.6.1",
+    "grunt": "^0.4.5",
+    "grunt-contrib-nodeunit": "^0.4.1",
+    "moment": "^2.8.4"
+  }
+}
