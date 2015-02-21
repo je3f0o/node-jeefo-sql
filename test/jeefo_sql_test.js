@@ -384,7 +384,8 @@ exports["jeefo-db"] = {
 	},
 	"Can find IN Order by field": function (test) {
 		this.db.find({
-			id : [3,1,2]
+			id : [3,1,2],
+			$to_sort : true
 		}, function (err, data) {
 			var records = data.records;
 			test.equal(records[0].id, 3, "first record id should be 3");
@@ -397,6 +398,17 @@ exports["jeefo-db"] = {
 		this.db.find({
 			id : [3,1,2],
 			firstname : testRecord1.firstname
+		}, function (err, data) {
+			test.equal(data.records[0].id, 1, "id should be 1");
+			test.done();
+		});
+	},
+	"Can find where $or_groups" : function (test) {
+		this.db.find({
+			$or_groups : [
+				{ id : 99 },
+				{ firstname : testRecord1.firstname }
+			]
 		}, function (err, data) {
 			test.equal(data.records[0].id, 1, "id should be 1");
 			test.done();
