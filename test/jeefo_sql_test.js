@@ -293,7 +293,7 @@ exports["jeefo-db"] = {
 		var db = this.db,
 			r = { name: c.first() };
 
-		db.table("customers").insert(r, function () {
+		db.set_table("customers").insert(r, function () {
 			db.first({ name : r.name }, function (err, result) {
 				test.equal(result.record.name, r.name, "names should be equal");
 				test.done();
@@ -403,20 +403,20 @@ exports["jeefo-db"] = {
 			test.done();
 		});
 	},
-	"Can find where or $groups" : function (test) {
+	"Can find where and $groups" : function (test) {
 		this.db.find({
 			$groups : [
 				{ id : 99 },
 				{ firstname : testRecord1.firstname }
 			]
 		}, function (err, data) {
-			test.equal(data.records[0].id, 1, "id should be 1");
+			test.equal(data.records.length, 0, "id should be 1");
 			test.done();
 		});
 	},
 	"Can find where or $groups with order by fields" : function (test) {
 		this.db.find({
-			$groups : [
+			$or_groups : [
 				{ id : [999, 999], $sort : true },
 				{ id : [3,1]     , $sort : true }
 			]
