@@ -1,8 +1,7 @@
 "use strict";
 
 var async   = require("async"),
-	mysql   = require("mysql"),
-	jeefoDB = require("../lib/jeefo_sql"),
+	mysql   = require("mysql"), jeefoDB = require("../lib/jeefo_sql"),
 	moment  = require("moment"),
 	Chance  = require("chance"),
 
@@ -423,6 +422,27 @@ exports["jeefo-db"] = {
 		}, function (err, data) {
 			test.equal(data.records[0].id, 3, "id should be 3");
 			test.equal(data.records[1].id, 1, "id should be 1");
+			test.done();
+		});
+	},
+	"Can find aggregate functions" : function (test) {
+		this.db.first({
+			id : { $max : "id" }
+		}, function (err, data) {
+			test.equal(data.record.id, 3, "id should be 3");
+			test.done();
+		});
+	},
+	"Can find aggregate functions with op" : function (test) {
+		this.db.first({
+			id : {
+				$fn : {
+					$max : "id",
+					op   : "$is"
+				}
+			}
+		}, function (err, data) {
+			test.equal(data.record.id, 3, "id should be 3");
 			test.done();
 		});
 	}

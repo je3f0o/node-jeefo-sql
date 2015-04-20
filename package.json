@@ -1,6 +1,6 @@
 {
   "name": "jeefo-sql",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "Very simple mysql ORM for to use my own projects.",
   "main": "lib/jeefo_sql",
   "author": "jeefo",
