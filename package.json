@@ -1,8 +1,12 @@
 {
   "name": "jeefo-sql",
-  "version": "0.0.26",
+  "version": "0.0.30",
   "description": "Very simple mysql ORM for to use my own projects.",
   "main": "lib/jeefo_sql",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:je3f0o/node-jeefo-sql.git"
+  },
   "author": "jeefo",
   "license": "MIT",
   "dependencies": {

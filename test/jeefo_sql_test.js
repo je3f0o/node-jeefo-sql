@@ -445,5 +445,29 @@ exports["jeefo-db"] = {
 			test.equal(data.record.id, 3, "id should be 3");
 			test.done();
 		});
+	},
+	"Can find aggregate functions distinct" : function (test) {
+		this.db.find({
+			id        : { $distinct : "id" },
+			$limit    : 2,
+			$order_by : { id : "desc" }
+		}, function (err, data) {
+			test.equal(data.records.length, 2, "data length should be 2");
+			test.equal(data.records[0].id, 3, "first record id should be 3");
+			test.equal(data.records[1].id, 2, "second record id should be 2");
+			test.done();
+		});
+	},
+	"Can select aggregate functions distinct" : function (test) {
+		this.db.find({
+			$select   : { $distinct : "id" },
+			$limit    : 2,
+			$order_by : { id : "desc" }
+		}, function (err, data) {
+			test.equal(data.records.length, 2, "data length should be 2");
+			test.equal(data.records[0].id, 3, "first record id should be 3");
+			test.equal(data.records[1].id, 2, "second record id should be 2");
+			test.done();
+		});
 	}
 };
