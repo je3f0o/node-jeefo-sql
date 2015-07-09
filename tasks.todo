@@ -1,0 +1,4 @@
+[x] FIX BUG select count(field, another_field, ...)
+[x] UPDATE set_table(DB_NAME.TABLE_NAME)
+[ ] Think about object values automatically convert to stringify ???
+[x] rename bind method set_fields

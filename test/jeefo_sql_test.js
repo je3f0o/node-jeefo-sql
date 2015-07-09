@@ -469,5 +469,28 @@ exports["jeefo-db"] = {
 			test.equal(data.records[1].id, 2, "second record id should be 2");
 			test.done();
 		});
+	},
+	"Can multiple select fields and count" : function (test) {
+		this.db.find({
+			$select   : [ "id", "firstname", "lastname" ],
+			$limit    : 2,
+			$order_by : { id : "desc" }
+		}, function (err, data) {
+			test.equal(data.records.length, 2, "data length should be 2");
+			test.equal(data.records[0].id, 3, "first record id should be 3");
+			test.equal(data.records[1].id, 2, "second record id should be 2");
+			test.equal(data.total, 3, "total records should be 3");
+			test.done();
+		});
+	},
+	"Set database and table name" : function (test) {
+		this.db.set_table("information_schema.columns").find({
+			COLUMN_NAME : "CHARACTER_SET_NAME",
+			TABLE_NAME  : "CHARACTER_SETS"
+		}, function (err, data) {
+			test.equal(data.records[0].TABLE_SCHEMA, "information_schema", "TABLE_SCHEMA should be 'information_schema'");
+			test.equal(data.total, 1, "Total records should be 1");
+			test.done();
+		});
 	}
 };
