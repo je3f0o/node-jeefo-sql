@@ -2,3 +2,4 @@
 [x] UPDATE set_table(DB_NAME.TABLE_NAME)
 [ ] Think about object values automatically convert to stringify ???
 [x] rename bind method set_fields
+[ ] Don't be lazy ! You must update a lot of things here. It would be major changes !

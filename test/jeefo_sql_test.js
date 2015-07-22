@@ -7,12 +7,13 @@ var async   = require("async"),
 
 	c = new Chance(),
 	test_db_config = {
-		adapter     : "mysql",
-		host        : "127.0.0.1",
-		user        : "root",
-		password    : "",
-		db_name     : "testee",
-		dataStrings : true
+		adapter          : "mysql",
+		host             : "127.0.0.1",
+		user             : "root",
+		password         : "",
+		db_name          : "testee",
+		dataStrings      : true,
+		multi_statements : true
 	},
 
 	date_format = "YYYY-MM-DD",
@@ -490,6 +491,18 @@ exports["jeefo-db"] = {
 		}, function (err, data) {
 			test.equal(data.records[0].TABLE_SCHEMA, "information_schema", "TABLE_SCHEMA should be 'information_schema'");
 			test.equal(data.total, 1, "Total records should be 1");
+			test.done();
+		});
+	},
+	"Can directly execute sql query" : function (test) {
+		this.db.exec("SELECT 3 * 3 AS total;", function (err, results) {
+			test.equal(results[0].total, 9, "3 times 3 equels should be 9");
+			test.done();
+		});
+	},
+	"Can directly execute sql query with values" : function (test) {
+		this.db.exec("SELECT ? * ? AS total;", [5, 5], function (err, results) {
+			test.equal(results[0].total, 25, "5 times 5 equels should be 25");
 			test.done();
 		});
 	}
