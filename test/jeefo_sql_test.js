@@ -1,11 +1,11 @@
 "use strict";
 
 var async   = require("async"),
-	mysql   = require("mysql"), jeefoDB = require("../lib/jeefo_sql"),
+	mysql   = require("mysql"),
 	moment  = require("moment"),
 	Chance  = require("chance"),
+	jeefoDB = require("../lib/jeefo_sql"),
 
-	c = new Chance(),
 	test_db_config = {
 		adapter          : "mysql",
 		host             : "127.0.0.1",
@@ -16,20 +16,22 @@ var async   = require("async"),
 		multi_statements : true
 	},
 
+	test_table  = "users",
 	date_format = "YYYY-MM-DD",
 
+	c = new Chance(),
 	testRecord1 = { firstname: c.first(), lastname: c.last(), age: c.age(), birthday: moment(c.birthday()).format(date_format) },
 	testRecord2 = { firstname: c.first(), lastname: c.last(), age: c.age(), birthday: moment(c.birthday()).format(date_format) },
 	testRecord3 = { firstname: c.first(), lastname: c.last(), age: c.age(), birthday: moment(c.birthday()).format(date_format) };
 
 function operator_test(record, query, callback) {
-	var db = jeefoDB(test_db_config, "users");
-	db.insert(record, function () {
-		db.find(query, callback);
+	var mysql_conn = jeefoDB(test_db_config);
+	mysql_conn.insert(test_table, record, function () {
+		mysql_conn.find(test_table, query, callback);
 	});
 }
 
-exports["jeefo-db"] = {
+exports["jeefo-sql"] = {
 	setUp: function (done) {
 		var mysql_conn;
 
@@ -78,7 +80,7 @@ exports["jeefo-db"] = {
 				}
 			],
 			function () {
-				this.db = jeefoDB(test_db_config, "users");
+				this.db = jeefoDB(test_db_config);
 				mysql_conn.end(done);
 			}.bind(this)
 		);
@@ -104,30 +106,42 @@ exports["jeefo-db"] = {
 			}
 		);
 	},
-	"Can create jeefo-db instance": function (test) {
-		var db;
+	"Can create mysql_conn instance": function (test) {
+		var mysql_conn;
 		test.doesNotThrow(function () {
-			db = jeefoDB(test_db_config, "users");
+			mysql_conn = jeefoDB(test_db_config);
 		});
-		test.notEqual(db, void 0, "should be instance of JeefoDB");
+		test.notEqual(mysql_conn, void 0, "should be instance of JeefoDB");
 		test.done();
 	},
+	"Can directly execute sql query" : function (test) {
+		this.db.exec("SELECT 3 * 3 AS total;", function (err, results) {
+			test.equal(results[0].total, 9, "3 times 3 is should be 9");
+			test.done();
+		});
+	},
+	"Can directly execute sql query with values" : function (test) {
+		this.db.exec("SELECT ? * ? AS total;", [5, 5], function (err, results) {
+			test.equal(results[0].total, 25, "5 times 5 is should be 25");
+			test.done();
+		});
+	},
 	"Can insert record": function (test) {
-		this.db.insert(testRecord1, function (err, record) {
+		this.db.insert(test_table, testRecord1, function (err, record) {
 			test.equal(record.id, 4, "id should be 4");
 			test.equal(testRecord1.firstname, record.firstname, "names should be equal");
 			test.done();
 		});
 	},
 	"Can find records by one key": function (test) {
-		this.db.find({ firstname: testRecord1.firstname }, function (err, result) {
+		this.db.find(test_table, { firstname: testRecord1.firstname }, function (err, result) {
 			test.equal(result.records.length, 1, "should find 1 record");
 			test.equal(testRecord1.firstname, result.records[0].firstname, "names should be equal");
 			test.done();
 		});
 	},
 	"Can find records by multiple keys": function (test) {
-		this.db.find({ firstname: testRecord1.firstname, age: testRecord1.age }, function (err, result) {
+		this.db.find(test_table, { firstname: testRecord1.firstname, age: testRecord1.age }, function (err, result) {
 			test.equal(result.records.length, 1, "should find 1 record");
 			test.equal(testRecord1.firstname, result.records[0].firstname, "names should be equal");
 			test.equal(testRecord1.age, result.records[0].age, "ages should be equal");
@@ -138,8 +152,8 @@ exports["jeefo-db"] = {
 		var db = this.db,
 			r = { firstname: testRecord1.firstname, age: c.age() };
 
-		db.insert(r, function () {
-			db.find({ firstname: testRecord1.firstname }, function (err, result) {
+		db.insert(test_table, r, function () {
+			db.find(test_table, { firstname: testRecord1.firstname }, function (err, result) {
 				test.equal(result.records.length, 2, "2 records should be found");
 				test.done();
 			});
@@ -173,8 +187,8 @@ exports["jeefo-db"] = {
 		"$limit object" : function (test) {
 			var db = this.db;
 
-			db.insert(testRecord1, function () {
-				db.find({
+			db.insert(test_table, testRecord1, function () {
+				db.find(test_table, {
 					$limit : {
 						offset : 1,
 						max : 2
@@ -189,8 +203,8 @@ exports["jeefo-db"] = {
 		"$limit max number" : function (test) {
 			var db = this.db;
 
-			db.insert(testRecord1, function () {
-				db.find({ $limit : 2 }, function (err, result) {
+			db.insert(test_table, testRecord1, function () {
+				db.find(test_table, { $limit : 2 }, function (err, result) {
 					test.equal(result.records[0].id, 1, "first record.id should be 1");
 					test.equal(result.records.length, 2, "records.length should be 2");
 					test.done();
@@ -200,7 +214,7 @@ exports["jeefo-db"] = {
 		"$order_by" : function (test) {
 			var db = this.db;
 
-			db.first({
+			db.first(test_table, {
 				$order_by : {
 					id : "desc"
 				}
@@ -215,8 +229,8 @@ exports["jeefo-db"] = {
 					firstname : "Washington"
 				}
 
-			db.insert(record, function () {
-				db.first({
+			db.insert(test_table, record, function () {
+				db.first(test_table, {
 					firstname : {
 						$like : "%ashingto%"
 					}
@@ -228,50 +242,50 @@ exports["jeefo-db"] = {
 		}
 	},
 	"Can get a first record": function (test) {
-		this.db.first(function (err, result) {
+		this.db.first(test_table, function (err, result) {
 			test.equal(result.record.id, 1, "record.id should be 1");
 			test.done();
 		});
 	},
 	"Can get a last record": function (test) {
-		this.db.last(function (err, result) {
+		this.db.last(test_table, function (err, result) {
 			test.equal(result.record.id, 3, "record.id should be 3");
 			test.done();
 		});
 	},
-	"Can find a single record": function (test) {
-		this.db.first({ firstname: testRecord1.firstname }, function (err, result) {
+	"Can find first record": function (test) {
+		this.db.first(test_table, { firstname: testRecord1.firstname }, function (err, result) {
 			test.equal(result.record.firstname, testRecord1.firstname, "names should be equal");
 			test.done();
 		});
 	},
 	"Can find all records": function (test) {
-		this.db.find(function (err, result) {
+		this.db.find(test_table, function (err, result) {
 			test.equal(result.records.length, 3, "should find 3 records");
 			test.done();
 		});
 	},
 	"Can find IN method records": function (test) {
-		this.db.find({ id : [1, 2] }, function (err, result) {
+		this.db.find(test_table, { id : [1, 2] }, function (err, result) {
 			test.equal(result.records.length, 2, "should find 2 records");
 			test.done();
 		});
 	},
 	"Can find IN method empty array": function (test) {
-		this.db.find({ id : [] }, function (err, result) {
+		this.db.find(test_table, { id : [] }, function (err, result) {
 			test.equal(result.records.length, 0, "should find 0 records");
 			test.equal(result.total, 0, "should find 0 records");
 			test.done();
 		});
 	},
 	"Can get total results number": function (test) {
-		this.db.total({ firstname : testRecord1.firstname }, function (err, total) {
+		this.db.total(test_table, { firstname : testRecord1.firstname }, function (err, total) {
 			test.equal(total, 1, "should at least 1 records");
 			test.done();
 		});
 	},
 	"Can update records": function (test) {
-		this.db.update({ firstname: testRecord1.firstname }, { age: 200 }, function (err, records) {
+		this.db.update(test_table, { firstname: testRecord1.firstname }, { age: 200 }, function (err, records) {
 			test.notEqual(records.length, 0, "should have at least 1 record updated");
 			records.forEach(function (record) {
 				test.equal(record.age, 200, "age should be updated");
@@ -282,20 +296,9 @@ exports["jeefo-db"] = {
 	"Can delete records": function (test) {
 		var db = this.db;
 		
-		db.delete({ firstname: testRecord1.firstname }, function () {
-			db.find({ firstname: testRecord1.firstname }, function (err, result) {
+		db.delete(test_table, { firstname: testRecord1.firstname }, function () {
+			db.find(test_table, { firstname: testRecord1.firstname }, function (err, result) {
 				test.equal(result.records.length, 0, "no records should be found");
-				test.done();
-			});
-		});
-	},
-	"Can change table name": function (test) {
-		var db = this.db,
-			r = { name: c.first() };
-
-		db.set_table("customers").insert(r, function () {
-			db.first({ name : r.name }, function (err, result) {
-				test.equal(result.record.name, r.name, "names should be equal");
 				test.done();
 			});
 		});
@@ -311,19 +314,19 @@ exports["jeefo-db"] = {
 					db.open(false, cb);
 				},
 				function (cb) {
-					db.insert(testRecord1, function (err, record) {
+					db.insert(test_table, testRecord1, function (err, record) {
 						results.insert = record;
 						cb();
 					});
 				},
 				function (cb) {
-					db.find(testRecord1, function (err, result) {
+					db.find(test_table, testRecord1, function (err, result) {
 						results.find = result.records;
 						cb();
 					});
 				},
 				function (cb) {
-					db.first(testRecord1, function (err, result) {
+					db.first(test_table, testRecord1, function (err, result) {
 						results.first = result.record;
 						cb();
 					});
@@ -333,8 +336,8 @@ exports["jeefo-db"] = {
 					test.equal(results.find.length, 2, "should find 2 records");
 					test.equal(results.first.firstname, testRecord1.firstname, "names should be equal");
 					
-					db.delete(results.insert, function () {
-						db.first(results.insert, function (err, result) {
+					db.delete(test_table, results.insert, function () {
+						db.first(test_table, results.insert, function (err, result) {
 							test.equal(result.record, void 0, "record must be deleted");
 							cb();
 						});
@@ -343,7 +346,7 @@ exports["jeefo-db"] = {
 				function (cb) {
 					var r = { firstname: c.first() };
 
-					db.update(testRecord1, r, function (err, records) {
+					db.update(test_table, testRecord1, r, function (err, records) {
 						test.equal(records.length, 1, "should have at least 1 record updated");
 						cb();
 					});
@@ -363,9 +366,9 @@ exports["jeefo-db"] = {
 	"Can find total record": function (test) {
 		var db = this.db;
 
-		db.insert(testRecord1, function () {
-			db.first({ firstname: testRecord1.firstname }, function (err, first) {
-				db.first({ firstname: "blaaaah" }, function (err, zero) {
+		db.insert(test_table, testRecord1, function () {
+			db.first(test_table, { firstname: testRecord1.firstname }, function (err, first) {
+				db.first(test_table, { firstname: "blaaaah" }, function (err, zero) {
 					test.equal(first.total, 2, "total record should be 2");
 					test.equal(zero.total, 0, "zero should be 0");
 					test.done();
@@ -373,17 +376,8 @@ exports["jeefo-db"] = {
 			});
 		})
 	},
-	"Can replace record": function (test) {
-		var r = { id : 1, firstname : c.first() };
-
-		this.db.replace(r, function (err, record) {
-			test.equal(record.firstname, r.firstname, "names should be equal");
-			test.equal(record.id, r.id, "IDs should be equal");
-			test.done();
-		});
-	},
 	"Can find IN Order by field": function (test) {
-		this.db.find({
+		this.db.find(test_table, {
 			id : [3,1,2],
 			$sort : true
 		}, function (err, data) {
@@ -395,7 +389,7 @@ exports["jeefo-db"] = {
 		});
 	},
 	"Can find IN Order by field with other wheres" : function (test) {
-		this.db.find({
+		this.db.find(test_table, {
 			id : [3,1,2],
 			firstname : testRecord1.firstname
 		}, function (err, data) {
@@ -404,9 +398,9 @@ exports["jeefo-db"] = {
 		});
 	},
 	"Can find where and $groups" : function (test) {
-		this.db.find({
+		this.db.find(test_table, {
 			$groups : [
-				{ id : 99 },
+				{ id        : 99 },
 				{ firstname : testRecord1.firstname }
 			]
 		}, function (err, data) {
@@ -415,7 +409,7 @@ exports["jeefo-db"] = {
 		});
 	},
 	"Can find where or $groups with order by fields" : function (test) {
-		this.db.find({
+		this.db.find(test_table, {
 			$or_groups : [
 				{ id : [999, 999], $sort : true },
 				{ id : [3,1]     , $sort : true }
@@ -426,20 +420,14 @@ exports["jeefo-db"] = {
 			test.done();
 		});
 	},
-	"Can find aggregate functions" : function (test) {
-		this.db.first({
-			id : { $max : "id" }
-		}, function (err, data) {
-			test.equal(data.record.id, 3, "id should be 3");
-			test.done();
-		});
-	},
-	"Can find aggregate functions with op" : function (test) {
-		this.db.first({
+	"Can find aggregate function with op" : function (test) {
+		this.db.first(test_table, {
 			id : {
-				$fn : {
-					$max : "id",
-					op   : "$is"
+				$aggregate : {
+					$fn    : "MAX",
+					$op    : "$is",
+					$arg   : "id",
+					$table : test_table
 				}
 			}
 		}, function (err, data) {
@@ -447,21 +435,17 @@ exports["jeefo-db"] = {
 			test.done();
 		});
 	},
-	"Can find aggregate functions distinct" : function (test) {
-		this.db.find({
-			id        : { $distinct : "id" },
-			$limit    : 2,
-			$order_by : { id : "desc" }
-		}, function (err, data) {
-			test.equal(data.records.length, 2, "data length should be 2");
-			test.equal(data.records[0].id, 3, "first record id should be 3");
-			test.equal(data.records[1].id, 2, "second record id should be 2");
-			test.done();
-		});
-	},
-	"Can select aggregate functions distinct" : function (test) {
-		this.db.find({
-			$select   : { $distinct : "id" },
+	"Can find aggregate function distinct with where fields" : function (test) {
+		this.db.find(test_table, {
+			id : {
+				$aggregate : {
+					$fn    : "DISTINCT",
+					$op    : "$in",
+					$arg   : "id",
+					$table : test_table,
+					id     : { $gt : 1 }
+				}
+			},
 			$limit    : 2,
 			$order_by : { id : "desc" }
 		}, function (err, data) {
@@ -472,7 +456,7 @@ exports["jeefo-db"] = {
 		});
 	},
 	"Can multiple select fields and count" : function (test) {
-		this.db.find({
+		this.db.find(test_table, {
 			$select   : [ "id", "firstname", "lastname" ],
 			$limit    : 2,
 			$order_by : { id : "desc" }
@@ -485,24 +469,12 @@ exports["jeefo-db"] = {
 		});
 	},
 	"Set database and table name" : function (test) {
-		this.db.set_table("information_schema.columns").find({
+		this.db.find("information_schema.columns", {
 			COLUMN_NAME : "CHARACTER_SET_NAME",
 			TABLE_NAME  : "CHARACTER_SETS"
 		}, function (err, data) {
 			test.equal(data.records[0].TABLE_SCHEMA, "information_schema", "TABLE_SCHEMA should be 'information_schema'");
 			test.equal(data.total, 1, "Total records should be 1");
-			test.done();
-		});
-	},
-	"Can directly execute sql query" : function (test) {
-		this.db.exec("SELECT 3 * 3 AS total;", function (err, results) {
-			test.equal(results[0].total, 9, "3 times 3 equels should be 9");
-			test.done();
-		});
-	},
-	"Can directly execute sql query with values" : function (test) {
-		this.db.exec("SELECT ? * ? AS total;", [5, 5], function (err, results) {
-			test.equal(results[0].total, 25, "5 times 5 equels should be 25");
 			test.done();
 		});
 	}
