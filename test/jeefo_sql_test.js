@@ -501,7 +501,6 @@ exports["jeefo-sql"] = {
 		}, {
 			firstname : "jeefo"
 		}, function (err, records, last_query) {
-			console.log(last_query);
 			test.equal(records.length, 1, "updated records length should be 1");
 			test.equal(records[0].firstname, "jeefo", "updated record's firstname should be 'jeefo'");
 			test.done();
