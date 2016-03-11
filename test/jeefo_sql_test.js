@@ -4,14 +4,14 @@ var async   = require("async"),
 	mysql   = require("mysql"),
 	moment  = require("moment"),
 	Chance  = require("chance"),
-	jeefoDB = require("../lib/jeefo_sql"),
+	jeefoDB = require("../lib/main"),
 
 	test_db_config = {
 		adapter          : "mysql",
 		host             : "127.0.0.1",
 		user             : "root",
-		password         : "",
-		db_name          : "testee",
+		password         : "toor",
+		db_name          : "test",
 		dataStrings      : true,
 		multi_statements : true
 	},
@@ -475,6 +475,35 @@ exports["jeefo-sql"] = {
 		}, function (err, data) {
 			test.equal(data.records[0].TABLE_SCHEMA, "information_schema", "TABLE_SCHEMA should be 'information_schema'");
 			test.equal(data.total, 1, "Total records should be 1");
+			test.done();
+		});
+	},
+	"Set filter table data" : function (test) {
+		this.db.filter(test_table, {
+			firstname    : testRecord1.firstname,
+			lastname     : testRecord1.lastname,
+			nonExistentKey : "UNUSED"
+		}, function (err, data) {
+			test.equal(Object.keys(data).length, 2, "Final data object properties length should be 2");
+			test.equal(data.firstname, testRecord1.firstname, "firstname should be " + testRecord1.firstname);
+			test.equal(data.firstname, testRecord1.firstname, "firstname should be " + testRecord1.firstname);
+			test.equal(data.lastname, testRecord1.lastname, "lastname should be " + testRecord1.lastname);
+			test.equal(data.nonExistentKey, undefined, "nonExistentKey should be undefined");
+			test.done();
+		});
+	},
+	"Update with NULL" : function (test) {
+		this.db.update(test_table, {
+			$groups : [
+				{ id : 1 },
+				{ id : { $not : null } }
+			]
+		}, {
+			firstname : "jeefo"
+		}, function (err, records, last_query) {
+			console.log(last_query);
+			test.equal(records.length, 1, "updated records length should be 1");
+			test.equal(records[0].firstname, "jeefo", "updated record's firstname should be 'jeefo'");
 			test.done();
 		});
 	}

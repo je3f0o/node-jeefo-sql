@@ -4,3 +4,4 @@
 [x] rename bind method set_fields
 [ ] Don't be lazy ! You must update a lot of things here. It would be major changes !
 [ ] update Aggregate function
+[ ] change unittest to karma
