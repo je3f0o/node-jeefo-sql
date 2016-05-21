@@ -133,6 +133,16 @@ exports["jeefo-sql"] = {
 			test.done();
 		});
 	},
+	"Can insert record with NULL": function (test) {
+		var clone = JSON.parse(JSON.stringify(testRecord1));
+		clone.firstname = null;
+
+		this.db.insert(test_table, clone, function (err, record) {
+			test.equal(record.id, 4, "id should be 4");
+			test.equal(record.firstname, null, "firstname should be NULL");
+			test.done();
+		});
+	},
 	"Can find records by one key": function (test) {
 		this.db.find(test_table, { firstname: testRecord1.firstname }, function (err, result) {
 			test.equal(result.records.length, 1, "should find 1 record");
@@ -500,9 +510,21 @@ exports["jeefo-sql"] = {
 			]
 		}, {
 			firstname : "jeefo"
-		}, function (err, records, last_query) {
+		}, function (err, records) {
 			test.equal(records.length, 1, "updated records length should be 1");
 			test.equal(records[0].firstname, "jeefo", "updated record's firstname should be 'jeefo'");
+			test.done();
+		});
+	},
+	"Can filter invalid $limit max value" : function (test) {
+		this.db.find(test_table, { $limit : -1 }, function (err, result) {
+			test.equal(result.total, 0, "total result should be zero");
+			test.done();
+		});
+	},
+	"Can filter invalid $limit object value" : function (test) {
+		this.db.find(test_table, { $limit : { offset : -1, max : -1 } }, function (err, result) {
+			test.equal(result.total, 0, "total result should be zero");
 			test.done();
 		});
 	}
