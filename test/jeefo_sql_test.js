@@ -313,66 +313,6 @@ exports["jeefo-sql"] = {
 			});
 		});
 	},
-	"Can Database open close test": function (test) {
-		var db = this.db, results = {};
-
-		test.expect(9);
-
-		async.waterfall(
-			[
-				function (cb) {
-					db.open(false, cb);
-				},
-				function (cb) {
-					db.insert(test_table, testRecord1, function (err, record) {
-						results.insert = record;
-						cb();
-					});
-				},
-				function (cb) {
-					db.find(test_table, testRecord1, function (err, result) {
-						results.find = result.records;
-						cb();
-					});
-				},
-				function (cb) {
-					db.first(test_table, testRecord1, function (err, result) {
-						results.first = result.record;
-						cb();
-					});
-				},
-				function (cb) {
-					test.equal(results.insert.firstname, testRecord1.firstname, "names should be equal");
-					test.equal(results.find.length, 2, "should find 2 records");
-					test.equal(results.first.firstname, testRecord1.firstname, "names should be equal");
-					
-					db.delete(test_table, results.insert, function () {
-						db.first(test_table, results.insert, function (err, result) {
-							test.equal(result.record, void 0, "record must be deleted");
-							cb();
-						});
-					});
-				},
-				function (cb) {
-					var r = { firstname: c.first() };
-
-					db.update(test_table, testRecord1, r, function (err, records) {
-						test.equal(records.length, 1, "should have at least 1 record updated");
-						cb();
-					});
-				}
-			],
-			function (err) {
-				test.equal(db.is_open, true, "to_close should be true");
-				test.equal(db.to_close, false, "to_close should be false");
-				db.close(err, function () {
-					test.equal(db.to_close, true, "to_close should be true");
-					test.equal(db.is_open, false, "to_close should be true");
-					test.done();
-				});
-			}
-		);
-	},
 	"Can find total record": function (test) {
 		var db = this.db;
 
